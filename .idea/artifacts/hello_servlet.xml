@@ -1,0 +1,28 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="hello-servlet">
+    <output-path>$PROJECT_DIR$/out/artifacts/hello_servlet</output-path>
+    <root id="archive" name="hello-servlet.war">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="hello-servlet" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: com.google.guava:guava:20.0" />
+          <element id="library" level="project" name="Maven: com.google.protobuf:protobuf-java:3.11.4" />
+          <element id="library" level="project" name="Maven: javax.servlet:javax.servlet-api:4.0.1" />
+          <element id="library" level="project" name="Maven: javax.servlet:jstl:1.2" />
+          <element id="library" level="project" name="Maven: mysql:mysql-connector-java:8.0.22" />
+          <element id="library" level="project" name="Maven: org.apiguardian:apiguardian-api:1.1.0" />
+          <element id="library" level="project" name="Maven: org.javassist:javassist:3.21.0-GA" />
+          <element id="library" level="project" name="Maven: org.junit.jupiter:junit-jupiter-api:5.7.1" />
+          <element id="library" level="project" name="Maven: org.junit.jupiter:junit-jupiter-engine:5.7.1" />
+          <element id="library" level="project" name="Maven: org.junit.platform:junit-platform-commons:1.7.1" />
+          <element id="library" level="project" name="Maven: org.junit.platform:junit-platform-engine:1.7.1" />
+          <element id="library" level="project" name="Maven: org.opentest4j:opentest4j:1.2.0" />
+          <element id="library" level="project" name="Maven: org.reflections:reflections:0.9.11" />
+        </element>
+      </element>
+      <element id="javaee-facet-resources" facet="hello-servlet/web/Web" />
+    </root>
+  </artifact>
+</component>
