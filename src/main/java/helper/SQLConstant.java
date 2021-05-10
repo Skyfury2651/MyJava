@@ -23,4 +23,5 @@ public class SQLConstant {
     public static final String BACKTICK = "`";
     public static final String UPDATE = "UPDATE";
     public static final String SET = "SET";
+    public static final String LIMIT = "LIMIT";
 }

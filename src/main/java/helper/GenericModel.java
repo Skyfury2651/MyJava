@@ -140,6 +140,62 @@ public class GenericModel<T> {
         return result;
     }
 
+    public List<T> findAll(int page , int perPage) {
+        List<T> result = new ArrayList<>(); // khởi tạo một danh sách rỗng.
+        Entity entityInfor = clazz.getAnnotation(Entity.class);
+        StringBuilder stringQuery = new StringBuilder();
+        stringQuery.append(SQLConstant.SELECT_ASTERISK); // select *
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(SQLConstant.FROM); // from
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(entityInfor.tableName()); // tableName
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(SQLConstant.LIMIT);
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(page * perPage);
+        stringQuery.append(SQLConstant.COMMON);
+        stringQuery.append(perPage);
+        try {
+            PreparedStatement preparedStatement = ConnectionHelper.getConnection().prepareStatement(stringQuery.toString());
+            // thực thi câu lệnh select * from.
+            // trả về ResultSet (nó thêm thằng con trỏ)
+            ResultSet resultSet = preparedStatement.executeQuery();
+            Field[] fields = clazz.getDeclaredFields(); //
+            while (resultSet.next()) { // trỏ đến các bản ghi cho đến khi trả về false.
+                T obj = clazz.newInstance(); // khởi tạo ra đối tượng cụ thể của class T.
+                for (Field field : fields) {
+                    // check nếu không là @Column
+                    if (!field.isAnnotationPresent(Column.class)) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    // lấy thông tin column để check tên trường, kiểu giá trị của trường.
+                    Column columnInfor = field.getAnnotation(Column.class);
+                    // tuỳ thuộc vào kiểu dữ liệu của trường, lấy giá trị ra theo các hàm khác nhau.
+                    // phải bổ sung các kiểu dữ liệu cần thiết.
+                    switch (field.getType().getSimpleName()) {
+                        case SQLConstant.PRIMITIVE_INT:
+                            // set giá trị của trường đó cho đối tượng mới tạo ở trên.
+                            field.set(obj, resultSet.getInt(columnInfor.columnName()));
+                            break;
+                        case SQLConstant.PRIMITIVE_STRING:
+                            field.set(obj, resultSet.getString(columnInfor.columnName()));
+                            break;
+                        case SQLConstant.PRIMITIVE_DOUBLE:
+                            field.set(obj, resultSet.getDouble(columnInfor.columnName()));
+                            break;
+                    }
+                }
+                // đối tượng obj kiểu T đã có đầy đủ giá trị.
+                // add vào trong danh sách trả về.
+                result.add(obj);
+            }
+        } catch (SQLException | InstantiationException | IllegalAccessException e) {
+            System.err.printf("Có lỗi xảy ra trong quá trình làm việc với database. Error %s.\n", e.getMessage());
+        }
+        return result;
+    }
+
     public T findById(String id) {
         Entity entity = clazz.getAnnotation(Entity.class);
         StringBuilder stringBuilder = new StringBuilder();
