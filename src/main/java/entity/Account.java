@@ -9,6 +9,17 @@ import java.sql.Date;
 
 @Entity(tableName = "account")
 public class Account {
+
+    public Account(){
+
+    }
+    public Account(String salt, String hashPassword, String fullName, String email) {
+        this.salt = salt;
+        this.hashPassword = hashPassword;
+        this.fullName = fullName;
+        this.email = email;
+    }
+
     public int getId() {
         return id;
     }
@@ -73,11 +84,11 @@ public class Account {
         this.deletedAt = deletedAt;
     }
 
-    public boolean isStatus() {
+    public int isStatus() {
         return status;
     }
 
-    public void setStatus(boolean status) {
+    public void setStatus(int status) {
         this.status = status;
     }
 
@@ -109,5 +120,20 @@ public class Account {
     private Date deletedAt;
 
     @Column(columnName = "status", columnType = "int(20)")
-    private boolean status;
+    private int status;
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "id=" + id +
+                ", salt='" + salt + '\'' +
+                ", hashPassword='" + hashPassword + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", deletedAt=" + deletedAt +
+                ", status=" + status +
+                '}';
+    }
 }

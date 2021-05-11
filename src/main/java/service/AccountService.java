@@ -10,41 +10,34 @@ import java.sql.Date;
 
 public class AccountService {
 
-    private AccountRepository accountRepository = new AccountRepository();
-    public public static void main(String[] args) {
-        Account account = new Account(){
+    protected AccountRepository accountRepository = new AccountRepository();
 
-        };
-        String hashPass = PasswordHash.MD5(account.getHashPassword());
-        account.setHashPassword(hashPass);
-        Date date = (Date) new java.util.Date();
-        account.setCreatedAt(date);
-        account.setUpdatedAt(date);
-        account.setDeletedAt(date);
-        accountRepository.save(account);
-    }
-    public boolean register(Account account){
-        try{
-            String hashPass = PasswordHash.MD5(account.getHashPassword());
+    public boolean register(Account account) {
+        try {
+            String hashPass = PasswordHash.hash(account.getHashPassword().toCharArray(), "123443322");
             account.setHashPassword(hashPass);
-            Date date = (Date) new java.util.Date();
+            java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
             account.setCreatedAt(date);
             account.setUpdatedAt(date);
             account.setDeletedAt(date);
             accountRepository.save(account);
 
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
     }
 
-    public Account login(String username , String password){
-        Account account = accountRepository.findById(username);
-        String hashPass = PasswordHash.MD5(account.getHashPassword());
-        if (account.getHashPassword().equals(hashPass)){
+    public Account login(String username, String password) {
+        AccountRepository accountRepository = new AccountRepository();
+        Account account = accountRepository.findByUserName(username);
+        String signInPassword = PasswordHash.hash(password.toCharArray(),account.getSalt());
+
+        if (account.getHashPassword().equals(signInPassword)){
+            System.out.println("go login");
             return account;
         }
-        return null;
+
+        return new Account();
     }
 }

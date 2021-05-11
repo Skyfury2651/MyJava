@@ -1,8 +1,11 @@
 package repository;
 
 import entity.Account;
+import entity.SqlCondition;
 import helper.GenericModel;
 import helper.GenericValidateClass;
+
+import java.util.HashMap;
 
 public class AccountRepository {
     private GenericModel<Account> genericModel = new GenericModel<>(Account.class);
@@ -10,7 +13,7 @@ public class AccountRepository {
 
 
     public boolean save(Account account) {
-        if (genericValidateClass.validate(account)){
+        if (genericValidateClass.validate(account)) {
             genericValidateClass.getErrors();
         }
         genericModel.save(account);
@@ -18,7 +21,10 @@ public class AccountRepository {
         return false;
     }
 
-    public Account findById(String username) {
-        return new Account();
+    public Account findByUserName(String username) {
+        HashMap<String, SqlCondition> condition = new HashMap<>();
+        condition.put("email", new SqlCondition('=', username));
+
+        return genericModel.findByColumns(condition);
     }
 }
