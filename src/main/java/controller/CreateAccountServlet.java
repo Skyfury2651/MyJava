@@ -28,6 +28,13 @@ public class CreateAccountServlet extends HttpServlet {
         // khắc phục lỗi utf8 ở view.
         req.setCharacterEncoding("UTF-8");
         Account account = new Account();
+        String email = req.getParameter("email");
+        String password = req.getParameter("password");
+        String fullName = req.getParameter("fullName");
+
+        account.setEmail(email);
+        account.setFullName(fullName);
+        account.setHashPassword(password);
 
         GenericValidateClass<Account> accountGenericValidateClass = new GenericValidateClass<>(Account.class);
         System.out.println("Validate");
@@ -47,7 +54,5 @@ public class CreateAccountServlet extends HttpServlet {
         System.out.println("Register Account");
         accountService.register(account);
         resp.sendRedirect("/admin/accounts/list");
-        //req.setAttribute("student", student);
-        //req.getRequestDispatcher("/admin/students/success.jsp").forward(req, resp);
     }
 }

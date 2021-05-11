@@ -33,7 +33,6 @@ public class AccountService {
         Account account = accountRepository.findByUserName(username);
 
         if (PasswordHash.isExpectedPassword(password.toCharArray(),account.getSalt(),account.getHashPassword().toCharArray())){
-            System.out.println("go login");
             return account;
         }
 
