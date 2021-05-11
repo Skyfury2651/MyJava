@@ -31,9 +31,8 @@ public class AccountService {
     public Account login(String username, String password) {
         AccountRepository accountRepository = new AccountRepository();
         Account account = accountRepository.findByUserName(username);
-        String signInPassword = PasswordHash.hash(password.toCharArray(),account.getSalt());
 
-        if (account.getHashPassword().equals(signInPassword)){
+        if (PasswordHash.isExpectedPassword(password.toCharArray(),account.getSalt(),account.getHashPassword().toCharArray())){
             System.out.println("go login");
             return account;
         }
