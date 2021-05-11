@@ -1,14 +1,17 @@
 package helper;
 
+import entity.SqlCondition;
 import hannotation.Column;
 import hannotation.Entity;
 import hannotation.Id;
 
 import java.lang.reflect.Field;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class GenericModel<T> {
@@ -61,13 +64,13 @@ public class GenericModel<T> {
                 strQuery.append(SQLConstant.SPACE); //
                 // nhanh trí, xử lý luôn phần value, tránh sử dụng 2 vòng lặp.
                 // check kiểu của trường, nếu là string thì thêm dấu '
-                if (field.getType().getSimpleName().equals(String.class.getSimpleName())) {
+                if (field.getType().getSimpleName().equals(String.class.getSimpleName()) || field.getType().getSimpleName().equals(Date.class.getSimpleName())) {
                     fieldValues.append(SQLConstant.QUOTE);
                 }
                 // lấy ra thông tin giá trị của trường đó tại obj truyền vào.
                 fieldValues.append(field.get(obj)); // field.setAccessible(true);
                 // check kiểu của trường, nếu là string thì thêm dấu '
-                if (field.getType().getSimpleName().equals(String.class.getSimpleName())) {
+                if (field.getType().getSimpleName().equals(String.class.getSimpleName())  || field.getType().getSimpleName().equals(Date.class.getSimpleName())) {
                     fieldValues.append(SQLConstant.QUOTE);
                 }
                 fieldValues.append(SQLConstant.COMMON); //,
@@ -99,6 +102,62 @@ public class GenericModel<T> {
         stringQuery.append(SQLConstant.FROM); // from
         stringQuery.append(SQLConstant.SPACE);
         stringQuery.append(entityInfor.tableName()); // tableName
+        try {
+            PreparedStatement preparedStatement = ConnectionHelper.getConnection().prepareStatement(stringQuery.toString());
+            // thực thi câu lệnh select * from.
+            // trả về ResultSet (nó thêm thằng con trỏ)
+            ResultSet resultSet = preparedStatement.executeQuery();
+            Field[] fields = clazz.getDeclaredFields(); //
+            while (resultSet.next()) { // trỏ đến các bản ghi cho đến khi trả về false.
+                T obj = clazz.newInstance(); // khởi tạo ra đối tượng cụ thể của class T.
+                for (Field field : fields) {
+                    // check nếu không là @Column
+                    if (!field.isAnnotationPresent(Column.class)) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    // lấy thông tin column để check tên trường, kiểu giá trị của trường.
+                    Column columnInfor = field.getAnnotation(Column.class);
+                    // tuỳ thuộc vào kiểu dữ liệu của trường, lấy giá trị ra theo các hàm khác nhau.
+                    // phải bổ sung các kiểu dữ liệu cần thiết.
+                    switch (field.getType().getSimpleName()) {
+                        case SQLConstant.PRIMITIVE_INT:
+                            // set giá trị của trường đó cho đối tượng mới tạo ở trên.
+                            field.set(obj, resultSet.getInt(columnInfor.columnName()));
+                            break;
+                        case SQLConstant.PRIMITIVE_STRING:
+                            field.set(obj, resultSet.getString(columnInfor.columnName()));
+                            break;
+                        case SQLConstant.PRIMITIVE_DOUBLE:
+                            field.set(obj, resultSet.getDouble(columnInfor.columnName()));
+                            break;
+                    }
+                }
+                // đối tượng obj kiểu T đã có đầy đủ giá trị.
+                // add vào trong danh sách trả về.
+                result.add(obj);
+            }
+        } catch (SQLException | InstantiationException | IllegalAccessException e) {
+            System.err.printf("Có lỗi xảy ra trong quá trình làm việc với database. Error %s.\n", e.getMessage());
+        }
+        return result;
+    }
+
+    public List<T> findAll(int page , int perPage) {
+        List<T> result = new ArrayList<>(); // khởi tạo một danh sách rỗng.
+        Entity entityInfor = clazz.getAnnotation(Entity.class);
+        StringBuilder stringQuery = new StringBuilder();
+        stringQuery.append(SQLConstant.SELECT_ASTERISK); // select *
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(SQLConstant.FROM); // from
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(entityInfor.tableName()); // tableName
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(SQLConstant.LIMIT);
+        stringQuery.append(SQLConstant.SPACE);
+        stringQuery.append(page * perPage);
+        stringQuery.append(SQLConstant.COMMON);
+        stringQuery.append(perPage);
         try {
             PreparedStatement preparedStatement = ConnectionHelper.getConnection().prepareStatement(stringQuery.toString());
             // thực thi câu lệnh select * from.
@@ -364,5 +423,90 @@ public class GenericModel<T> {
             System.err.printf("Có lỗi xảy ra trong quá trình làm việc với database. Error %s.\n", e.getMessage());
         }
         return false;
+    }
+
+    public T findByColumns(HashMap<String, SqlCondition> hashMap){
+        Entity entity = clazz.getAnnotation(Entity.class);
+        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder fieldValues = new StringBuilder();
+        stringBuilder.append(SQLConstant.SELECT_ASTERISK);
+        stringBuilder.append(SQLConstant.SPACE);
+        stringBuilder.append(SQLConstant.FROM);
+        stringBuilder.append(SQLConstant.SPACE);
+        stringBuilder.append(entity.tableName());
+        stringBuilder.append(SQLConstant.SPACE);
+        stringBuilder.append(SQLConstant.WHERE);
+        stringBuilder.append(SQLConstant.SPACE);
+        for (Field field : clazz.getDeclaredFields()) {
+            // check xem trường có phải là @Column không.
+            if (!field.isAnnotationPresent(Column.class)) {
+                // bỏ qua trong trường hợp không được đánh là @Column.
+                continue;
+            }
+            // cần set bằng true để có thể set, get giá trị của field trong một object nào đó.
+            field.setAccessible(true);
+
+            Column columnInfor = field.getAnnotation(Column.class);
+            if (hashMap.containsKey(columnInfor.columnName())){
+                stringBuilder.append(columnInfor.columnName()); // nối tên trường.
+                stringBuilder.append(SQLConstant.SPACE);
+                stringBuilder.append(hashMap.get(columnInfor.columnName()).getExpression());
+                stringBuilder.append(SQLConstant.SPACE);
+                if (field.getType().getSimpleName().equals(String.class.getSimpleName())) {
+                    stringBuilder.append(SQLConstant.QUOTE);
+                }
+                stringBuilder.append(hashMap.get(columnInfor.columnName()).getValue());
+                if (field.getType().getSimpleName().equals(String.class.getSimpleName())) {
+                    stringBuilder.append(SQLConstant.QUOTE);
+                }
+                hashMap.remove(columnInfor.columnName());
+                if (hashMap.size() != 0){
+                    stringBuilder.append(SQLConstant.SPACE);
+                    stringBuilder.append(SQLConstant.AND);
+                    stringBuilder.append(SQLConstant.SPACE);
+                }
+            }
+        }
+        try {
+            PreparedStatement preparedStatement = ConnectionHelper.getConnection().prepareStatement(stringBuilder.toString());
+            // thực thi câu lệnh select * from.
+            // trả về ResultSet (nó thêm thằng con trỏ)
+            ResultSet resultSet = preparedStatement.executeQuery();
+            Field[] fields = clazz.getDeclaredFields(); //
+            while (resultSet.next()) { // trỏ đến các bản ghi cho đến khi trả về false.
+                T obj = clazz.newInstance(); // khởi tạo ra đối tượng cụ thể của class T.
+                for (Field field : fields) {
+                    // check nếu không là @Column
+                    if (!field.isAnnotationPresent(Column.class)) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    // lấy thông tin column để check tên trường, kiểu giá trị của trường.
+                    Column columnInfor = field.getAnnotation(Column.class);
+                    // tuỳ thuộc vào kiểu dữ liệu của trường, lấy giá trị ra theo các hàm khác nhau.
+                    // phải bổ sung các kiểu dữ liệu cần thiết.
+                    switch (field.getType().getSimpleName()) {
+                        case SQLConstant.PRIMITIVE_INT:
+                            // set giá trị của trường đó cho đối tượng mới tạo ở trên.
+                            field.set(obj, resultSet.getInt(columnInfor.columnName()));
+                            break;
+                        case SQLConstant.PRIMITIVE_STRING:
+                            field.set(obj, resultSet.getString(columnInfor.columnName()));
+                            break;
+                        case SQLConstant.PRIMITIVE_DOUBLE:
+                            field.set(obj, resultSet.getDouble(columnInfor.columnName()));
+                            break;
+                    }
+                }
+                // đối tượng obj kiểu T đã có đầy đủ giá trị.
+                // add vào trong danh sách trả về.
+
+                return obj;
+            }
+        } catch (SQLException | InstantiationException | IllegalAccessException e) {
+            System.err.printf("Có lỗi xảy ra trong quá trình làm việc với database. Error %s.\n", e.getMessage());
+        }
+        System.out.println(stringBuilder.toString());
+        return null;
     }
 }
