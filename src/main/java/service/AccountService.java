@@ -17,10 +17,11 @@ public class AccountService {
             account.setSalt(PasswordHash.getNextSalt());
             String hashPass = PasswordHash.hash(account.getHashPassword().toCharArray(), account.getSalt());
             account.setHashPassword(hashPass);
-            java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
+            Date date = new Date(System.currentTimeMillis());
             account.setCreatedAt(date);
             account.setUpdatedAt(date);
             account.setDeletedAt(date);
+            System.out.println(account);
             accountRepository.save(account);
 
             return true;

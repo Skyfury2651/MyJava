@@ -122,18 +122,4 @@ public class Account {
     @Column(columnName = "status", columnType = "int(20)")
     private int status;
 
-    @Override
-    public String toString() {
-        return "Account{" +
-                "id=" + id +
-                ", salt='" + salt + '\'' +
-                ", hashPassword='" + hashPassword + '\'' +
-                ", fullName='" + fullName + '\'' +
-                ", email='" + email + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                ", deletedAt=" + deletedAt +
-                ", status=" + status +
-                '}';
-    }
 }

@@ -5,6 +5,8 @@ import helper.GenericValidateClass;
 import service.AccountService;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+@WebServlet(value = "/accounts/login")
 public class AuthenticationServlet extends HttpServlet {
     private AccountService accountService = new AccountService();
 
@@ -27,27 +30,9 @@ public class AuthenticationServlet extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         String username = req.getParameter("username");
         String password = req.getParameter("password");
-        Account account = new Account();
 
-        GenericValidateClass<Account> accountGenericValidateClass = new GenericValidateClass<>(Account.class);
-        System.out.println("Validate");
-        System.out.println(accountGenericValidateClass.validate(account));
-        System.out.println("End Validate");
-        // validate
-        if(!accountGenericValidateClass.validate(account)){
-            System.out.println("Have Error");
-            HashMap<String, ArrayList<String>> errors = accountGenericValidateClass.getErrors();
+        accountService.login(username, password);
 
-            req.setAttribute("errors", errors);
-            req.setAttribute("account", account);
-            req.getRequestDispatcher("/admin/accounts/form.jsp").forward(req, resp);
-            return;
-        }
-        System.out.println(accountGenericValidateClass.getErrors());
-        System.out.println("Register Account");
-        accountService.register(account);
         resp.sendRedirect("/admin/accounts/list");
-        //req.setAttribute("student", student);
-        //req.getRequestDispatcher("/admin/students/success.jsp").forward(req, resp);
     }
 }

@@ -30,7 +30,6 @@ public class GenericValidateClass<T> {
                 }
                 // cần set bằng true để có thể set, get giá trị của field trong một object nào đó.
                 field.setAccessible(true);
-
                 Column columnInfor = field.getAnnotation(Column.class);
                 if (!field.isAnnotationPresent(Validate.class)) {
                     // bỏ qua trong trường hợp không được đánh là @Validate.
@@ -44,14 +43,11 @@ public class GenericValidateClass<T> {
                     if (object == null) {
                         String str = String.format("Object : null / Column : %s", columnInfor.columnName());
                         bugs.add(str);
-
-                        continue;
                     }
-
                     // Checking for String type
                     if (object instanceof String) {
                         String content = (String) object;
-                        if (content.length() == 0) {
+                        if (content.length() == 0 || content.equals("null")) {
                             bugs.add(validateInfo.requiredMessage());
                         }
                     }
@@ -67,7 +63,6 @@ public class GenericValidateClass<T> {
                         }
                     }
                 }
-
                 if (bugs.size() != 0){
                     this.errors.put(columnInfor.columnName(),bugs);
                 }
