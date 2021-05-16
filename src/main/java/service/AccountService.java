@@ -14,7 +14,8 @@ public class AccountService {
 
     public boolean register(Account account) {
         try {
-            String hashPass = PasswordHash.hash(account.getHashPassword().toCharArray(), "123443322");
+            account.setSalt(PasswordHash.getNextSalt());
+            String hashPass = PasswordHash.hash(account.getHashPassword().toCharArray(), account.getSalt());
             account.setHashPassword(hashPass);
             java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
             account.setCreatedAt(date);
